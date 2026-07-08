@@ -8,7 +8,94 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div id="app"></div>
+  <header class="topbar">
+    <div>
+      <div class="brand">BRICKSTONE</div>
+      <div class="subtitle">Manager Pro — Avansuri muncitori</div>
+    </div>
+    <button id="logoutBtn" class="btn ghost hidden">Ieșire</button>
+  </header>
+
+  <main class="wrap">
+    <section id="loginView" class="card login-card">
+      <h1>Autentificare</h1>
+      <p class="muted">Admin sau operator</p>
+      <input id="loginUser" placeholder="Email admin sau nume operator" autocomplete="username" />
+      <input id="loginPass" type="password" placeholder="Parolă" autocomplete="current-password" />
+      <button id="loginBtn" class="btn primary">Intră</button>
+      <div class="hint">
+        Admin: <b>piatrata@yandex.com</b> / <b>1234</b><br />
+        Operator: <b>Serghei</b> / <b>1111</b>
+      </div>
+    </section>
+
+    <section id="appView" class="hidden">
+      <div class="card row between">
+        <div>
+          <h2 id="welcome"></h2>
+          <span id="roleBadge" class="badge"></span>
+          <span id="syncStatus" class="muted small"></span>
+        </div>
+      </div>
+
+      <div id="adminStats" class="stats hidden">
+        <div class="stat"><span>Muncitori activi</span><b id="statWorkers">0</b></div>
+        <div class="stat"><span>Total avansuri</span><b id="statAdvances">0 lei</b></div>
+        <div class="stat"><span>Rest total</span><b id="statRest">0 lei</b></div>
+      </div>
+
+      <div id="adminOperators" class="card admin-only hidden">
+        <h2>Gestionare operatori</h2>
+        <div class="grid3">
+          <input id="opName" placeholder="Nume operator" />
+          <input id="opPass" placeholder="Parolă operator" />
+          <button id="addOperatorBtn" class="btn primary">Adaugă operator</button>
+        </div>
+        <div class="tableWrap"><table><thead><tr><th>Operator</th><th>Parolă</th><th>Status</th><th>Acțiuni</th></tr></thead><tbody id="operatorsTable"></tbody></table></div>
+      </div>
+
+      <div id="adminWorkers" class="card admin-only hidden">
+        <h2>Gestionare muncitori</h2>
+        <div class="grid4">
+          <input id="wName" placeholder="Nume muncitor" />
+          <input id="wPhone" placeholder="Telefon +373..." />
+          <input id="wSalary" type="number" placeholder="Salariu / calcul lei" />
+          <input id="wPin" placeholder="PIN" />
+        </div>
+        <button id="addWorkerBtn" class="btn primary">Adaugă muncitor</button>
+        <div class="tableWrap"><table><thead><tr><th>Nume</th><th>Telefon</th><th>Salariu</th><th>PIN</th><th>Status</th><th>Acțiuni</th></tr></thead><tbody id="workersTable"></tbody></table></div>
+      </div>
+
+      <div class="card">
+        <h2>Acordă avans</h2>
+        <div class="grid2">
+          <select id="workerSelect"></select>
+          <input id="advanceAmount" type="number" placeholder="Suma avans lei" />
+        </div>
+        <div class="grid2">
+          <input id="advancePin" placeholder="PIN confirmare muncitor" />
+          <input id="advanceComment" placeholder="Comentariu opțional" />
+        </div>
+        <button id="addAdvanceBtn" class="btn primary">Salvează avans</button>
+        <p class="muted small">Operatorul poate adăuga avansuri, dar nu vede totalurile financiare.</p>
+      </div>
+
+      <div id="adminReport" class="card admin-only hidden">
+        <h2>Raport Admin</h2>
+        <div class="row gap">
+          <input id="searchBox" placeholder="Caută muncitor..." />
+          <button id="exportBtn" class="btn success">Export Excel CSV</button>
+        </div>
+        <div class="tableWrap"><table><thead><tr><th>Muncitor</th><th>Telefon</th><th>Salariu</th><th>Avansuri</th><th>Rest</th></tr></thead><tbody id="reportTable"></tbody></table></div>
+      </div>
+
+      <div class="card">
+        <h2>Istoric avansuri</h2>
+        <div class="tableWrap"><table><thead><tr><th>Cod</th><th>Data</th><th>Muncitor</th><th>Suma</th><th>Operator</th><th>Comentariu</th></tr></thead><tbody id="advancesTable"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+
   <script src="app.js"></script>
 </body>
 </html>
