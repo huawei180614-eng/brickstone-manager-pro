@@ -1,13 +1,15 @@
-# Brickstone Manager Pro v1.6
-
-Update complet sincronizat cu Supabase.
-
-## Pași
-1. Rulează `sql/setup_v16.sql` în Supabase SQL Editor.
-2. În GitHub înlocuiește: `index.html`, `app.js`, `styles.css`, `README.md`.
-3. Commit changes.
-4. Deschide aplicația și apasă Ctrl+F5.
-
-## Login
-Admin: `piatrata@yandex.com` / `1234`
-Operator: `Serghei` / `1111`
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brickstone Manager Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header><h1>Brickstone Manager Pro</h1><button id="logoutBtn" class="hidden">Ieșire</button></header>
+  <main id="app"></main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>

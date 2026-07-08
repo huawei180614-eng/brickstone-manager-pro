@@ -1,15 +1,47 @@
-<!doctype html>
-<html lang="ro">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brickstone Manager Pro</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header><h1>Brickstone Manager Pro</h1><button id="logoutBtn" class="hidden">Ieșire</button></header>
-  <main id="app"></main>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+const SUPABASE_URL = 'https://gewgugneceqxwovkstqs.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Dy5AfagRaYpfkth3sy1MCA_ZDHv7jds';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const app = document.getElementById('app');
+const logoutBtn = document.getElementById('logoutBtn');
+let sessionUser = JSON.parse(localStorage.getItem('brickstone_user') || 'null');
+let workers = []; let advances = []; let users = [];
+
+function money(n){return (Number(n)||0).toLocaleString('ro-RO')+' lei'}
+function today(){return new Date().toLocaleString('ro-RO')}
+function codeFor(n){return 'AV-'+String(n).padStart(6,'0')}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+
+logoutBtn.onclick=()=>{localStorage.removeItem('brickstone_user');sessionUser=null;renderLogin()};
+async function loadAll(){
+ const [w,a,u]=await Promise.all([
+  db.from('workers').select('*').order('created_at',{ascending:false}),
+  db.from('advances').select('*').order('created_at',{ascending:false}),
+  db.from('users_roles').select('*').order('created_at',{ascending:false})
+ ]);
+ if(w.error||a.error||u.error){alert('Eroare Supabase: '+(w.error||a.error||u.error).message);return}
+ workers=w.data||[]; advances=a.data||[]; users=u.data||[];
+}
+function renderLogin(){logoutBtn.classList.add('hidden');app.innerHTML=`<section class="card login"><h2>Autentificare</h2><p class="small">Admin sau operator</p><input id="loginUser" placeholder="Utilizator" value="piatrata@yandex.com"><input id="loginPass" type="password" placeholder="Parolă" value="1234"><button onclick="login()">Intră</button><div class="small"><b>Admin:</b> piatrata@yandex.com / 1234<br><b>Operator:</b> Serghei / 1111</div></section>`}
+async function login(){
+ const email=document.getElementById('loginUser').value.trim(); const pass=document.getElementById('loginPass').value.trim();
+ const {data,error}=await db.from('users_roles').select('*').eq('email',email).eq('password',pass).eq('active',true).maybeSingle();
+ if(error||!data){alert('Utilizator sau parolă greșită');return}
+ sessionUser=data; localStorage.setItem('brickstone_user',JSON.stringify(data)); await renderApp();
+}
+async function renderApp(){logoutBtn.classList.remove('hidden'); await loadAll(); sessionUser.role==='admin'?renderAdmin():renderOperator();}
+function stats(){const activeWorkers=workers.filter(w=>w.active!==false); const totalAdv=advances.reduce((s,a)=>s+Number(a.amount||0),0); const totalSalary=activeWorkers.reduce((s,w)=>s+Number(w.salary||0),0); return {activeWorkers,totalAdv,totalSalary,rest:totalSalary-totalAdv}}
+function renderAdmin(){const s=stats(); app.innerHTML=`<section class="card"><div class="topline"><div><h2>Bun venit, Admin Brickstone</h2><span class="pill">Administrator</span></div><div class="small">Date salvate online în Supabase</div></div></section><section class="stats"><div class="stat">Muncitori<strong>${s.activeWorkers.length}</strong></div><div class="stat">Total avansuri<strong>${money(s.totalAdv)}</strong></div><div class="stat">Rest total<strong>${money(s.rest)}</strong></div><div class="stat">Operatori<strong>${users.filter(u=>u.role==='operator'&&u.active!==false).length}</strong></div></section><section class="grid"><div class="card"><h3>Adaugă muncitor</h3><input id="wName" placeholder="Nume"><input id="wPhone" placeholder="Telefon +373..."><input id="wPin" placeholder="PIN"><input id="wSalary" type="number" placeholder="Salariu total lei"><button onclick="addWorker()">Salvează muncitor</button></div><div class="card"><h3>Acordă avans</h3>${advanceForm()}</div></section><section class="grid"><div class="card"><h3>Gestionare operatori</h3><input id="opName" placeholder="Nume operator / login"><input id="opPass" placeholder="Parolă"><button onclick="addOperator()">Adaugă operator</button>${operatorsTable()}</div><div class="card"><h3>Muncitori</h3>${workersTable()}</div></section><section class="card"><h3>Raport Admin</h3><button class="dark" onclick="exportCSV()">Export Excel CSV</button>${reportTable()}</section>`}
+function renderOperator(){app.innerHTML=`<section class="card"><h2>Bun venit, ${esc(sessionUser.email)}</h2><span class="pill">Operator</span><p>Poți doar acorda avansuri. Nu vezi salariile și rapoartele.</p></section><section class="card"><h3>Acordă avans</h3>${advanceForm()}</section>`}
+function advanceForm(){return `<select id="advWorker"><option value="">Alege muncitor</option>${workers.filter(w=>w.active!==false).map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select><input id="advAmount" type="number" placeholder="Suma avans lei"><input id="advPin" placeholder="PIN muncitor"><textarea id="advComment" placeholder="Comentariu"></textarea><button onclick="addAdvance()">Salvează avans</button>`}
+async function addWorker(){const row={name:wName.value.trim(),phone:wPhone.value.trim(),pin:wPin.value.trim(),salary:Number(wSalary.value||0),active:true}; if(!row.name)return alert('Scrie numele'); const {error}=await db.from('workers').insert(row); if(error)return alert(error.message); await renderApp();}
+async function addAdvance(){const worker=workers.find(w=>w.id===advWorker.value); if(!worker)return alert('Alege muncitor'); if((worker.pin||'')!==advPin.value.trim())return alert('PIN greșit'); const amount=Number(advAmount.value||0); if(!amount)return alert('Scrie suma'); const code=codeFor(advances.length+1); const {error}=await db.from('advances').insert({worker_id:worker.id,amount,comment:advComment.value.trim(),operator_name:sessionUser.email,code}); if(error)return alert(error.message); alert('Avans salvat: '+code); await renderApp();}
+async function addOperator(){const email=opName.value.trim(), password=opPass.value.trim(); if(!email||!password)return alert('Completează operator și parolă'); const {error}=await db.from('users_roles').insert({email,password,role:'operator',active:true}); if(error)return alert(error.message); await renderApp();}
+async function changePass(id){const p=prompt('Parola nouă:'); if(!p)return; const {error}=await db.from('users_roles').update({password:p}).eq('id',id); if(error)return alert(error.message); await renderApp();}
+async function toggleUser(id,active){await db.from('users_roles').update({active:!active}).eq('id',id); await renderApp();}
+async function deleteWorker(id){if(!confirm('Ștergi/dezactivezi muncitorul?'))return; await db.from('workers').update({active:false}).eq('id',id); await renderApp();}
+async function editWorker(id){const w=workers.find(x=>x.id===id); const name=prompt('Nume:',w.name); if(!name)return; const phone=prompt('Telefon:',w.phone||''); const pin=prompt('PIN:',w.pin||''); const salary=Number(prompt('Salariu:',w.salary||0)||0); await db.from('workers').update({name,phone,pin,salary}).eq('id',id); await renderApp();}
+function operatorsTable(){return `<table><tr><th>Operator</th><th>Status</th><th>Acțiuni</th></tr>${users.filter(u=>u.role==='operator').map(u=>`<tr><td>${esc(u.email)}</td><td>${u.active?'Activ':'Inactiv'}</td><td><button class="gray" onclick="changePass('${u.id}')">Parolă</button><button class="dark" onclick="toggleUser('${u.id}',${u.active!==false})">${u.active?'Dezactivează':'Activează'}</button></td></tr>`).join('')}</table>`}
+function workersTable(){return `<table><tr><th>Nume</th><th>Telefon</th><th>PIN</th><th>Acțiuni</th></tr>${workers.filter(w=>w.active!==false).map(w=>`<tr><td>${esc(w.name)}</td><td>${esc(w.phone)}</td><td>${esc(w.pin)}</td><td><button class="gray" onclick="editWorker('${w.id}')">Editează</button><button class="dark" onclick="deleteWorker('${w.id}')">Șterge</button></td></tr>`).join('')}</table>`}
+function reportTable(){return `<table><tr><th>Muncitor</th><th>Telefon</th><th>Salariu</th><th>Avansuri</th><th>Rest</th></tr>${workers.filter(w=>w.active!==false).map(w=>{const t=advances.filter(a=>a.worker_id===w.id).reduce((s,a)=>s+Number(a.amount||0),0);return `<tr><td>${esc(w.name)}</td><td>${esc(w.phone)}</td><td>${money(w.salary)}</td><td>${money(t)}</td><td>${money(Number(w.salary||0)-t)}</td></tr>`}).join('')}</table><h3>Istoric avansuri</h3><table><tr><th>Cod</th><th>Muncitor</th><th>Suma</th><th>Operator</th><th>Data</th><th>Comentariu</th></tr>${advances.map(a=>{const w=workers.find(x=>x.id===a.worker_id)||{};return `<tr><td>${esc(a.code)}</td><td>${esc(w.name||'')}</td><td>${money(a.amount)}</td><td>${esc(a.operator_name)}</td><td>${new Date(a.created_at).toLocaleString('ro-RO')}</td><td>${esc(a.comment)}</td></tr>`}).join('')}</table>`}
+function exportCSV(){let csv='Muncitor,Telefon,Salariu,Avansuri,Rest\n'; workers.filter(w=>w.active!==false).forEach(w=>{const t=advances.filter(a=>a.worker_id===w.id).reduce((s,a)=>s+Number(a.amount||0),0); csv+=`"${w.name}","${w.phone||''}",${w.salary||0},${t},${Number(w.salary||0)-t}\n`;}); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='raport_avansuri.csv'; a.click();}
+if(sessionUser) renderApp(); else renderLogin();
