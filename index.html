@@ -1,118 +1,15 @@
-const SUPABASE_URL = 'https://gewgugneceqxwovkstqs.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_Dy5AfagRaYpfkth3sy1MCA_ZDHv7jds';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const DEFAULT_ADMIN = { email:'piatrata@yandex.com', password:'1234', role:'admin', active:true };
-const DEFAULT_OPERATOR = { email:'Serghei', password:'1111', role:'operator', active:true };
-let currentUser = JSON.parse(localStorage.getItem('brickstone_current_user') || 'null');
-let workers = [];
-let advances = [];
-let users = [];
-let tab = 'dashboard';
-
-const $ = (id)=>document.getElementById(id);
-const money = n => `${Number(n||0).toLocaleString('ro-RO')} lei`;
-const today = () => new Date().toLocaleString('ro-RO');
-const codeFor = (i) => 'AV-' + String(i).padStart(6,'0');
-function toast(msg){ alert(msg); }
-
-async function safeSelect(table){
-  const {data,error} = await sb.from(table).select('*').order('created_at',{ascending:false});
-  if(error){ console.error(table,error); return []; }
-  return data || [];
-}
-async function loadAll(){
-  users = await safeSelect('users_roles');
-  workers = await safeSelect('workers');
-  advances = await safeSelect('advances');
-  if(!users.length){ await seedUsers(); users = await safeSelect('users_roles'); }
-}
-async function seedUsers(){
-  await sb.from('users_roles').insert([DEFAULT_ADMIN, DEFAULT_OPERATOR]);
-}
-
-async function login(){
-  const email = $('loginEmail').value.trim();
-  const password = $('loginPass').value.trim();
-  users = await safeSelect('users_roles');
-  if(!users.length){ await seedUsers(); users = await safeSelect('users_roles'); }
-  const u = users.find(x => String(x.email).toLowerCase() === email.toLowerCase() && String(x.password||'') === password && x.active !== false);
-  if(!u) return toast('Utilizator sau parolă greșită');
-  currentUser = { id:u.id, email:u.email, role:u.role };
-  localStorage.setItem('brickstone_current_user', JSON.stringify(currentUser));
-  await loadAll(); render();
-}
-function logout(){ localStorage.removeItem('brickstone_current_user'); currentUser=null; render(); }
-
-async function addOperator(){
-  const email=$('opEmail').value.trim(); const password=$('opPass').value.trim();
-  if(!email||!password) return toast('Introduceți nume și parolă operator');
-  const {error}=await sb.from('users_roles').insert({email,password,role:'operator',active:true});
-  if(error) return toast('Eroare operator: '+error.message);
-  $('opEmail').value=''; $('opPass').value=''; await loadAll(); render();
-}
-async function changeOperatorPass(id){
-  const p = prompt('Parolă nouă pentru operator:'); if(!p) return;
-  const {error}=await sb.from('users_roles').update({password:p}).eq('id',id);
-  if(error) return toast(error.message); await loadAll(); render();
-}
-async function toggleOperator(id, active){
-  const {error}=await sb.from('users_roles').update({active:!active}).eq('id',id);
-  if(error) return toast(error.message); await loadAll(); render();
-}
-
-async function saveWorker(){
-  if(currentUser.role!=='admin') return toast('Doar administratorul poate adăuga muncitori');
-  const item={
-    name:$('wName').value.trim(), phone:$('wPhone').value.trim(), pin:$('wPin').value.trim(),
-    salary:Number($('wSalary').value||0), site:'', active:true
-  };
-  if(!item.name) return toast('Introduceți numele muncitorului');
-  const editId = $('workerEditId').value;
-  let res;
-  if(editId) res = await sb.from('workers').update(item).eq('id',editId); else res = await sb.from('workers').insert(item);
-  if(res.error) return toast('Eroare muncitor: '+res.error.message);
-  clearWorkerForm(); await loadAll(); render();
-}
-function editWorker(id){
-  const w=workers.find(x=>x.id===id); if(!w) return;
-  tab='workers'; render();
-  setTimeout(()=>{ $('workerEditId').value=w.id; $('wName').value=w.name||''; $('wPhone').value=w.phone||''; $('wPin').value=w.pin||''; $('wSalary').value=w.salary||0; },50);
-}
-function clearWorkerForm(){ ['workerEditId','wName','wPhone','wPin','wSalary'].forEach(id=>$(id).value=''); }
-async function deleteWorker(id){
-  if(!confirm('Sigur ștergi/dezactivezi muncitorul?')) return;
-  const {error}=await sb.from('workers').update({active:false}).eq('id',id);
-  if(error) return toast(error.message); await loadAll(); render();
-}
-
-async function saveAdvance(){
-  const worker_id=$('aWorker').value; const amount=Number($('aAmount').value||0); const pin=$('aPin').value.trim(); const comment=$('aComment').value.trim();
-  const w=workers.find(x=>x.id===worker_id);
-  if(!w||!amount) return toast('Alege muncitor și sumă');
-  if(String(w.pin||'') !== pin) return toast('PIN muncitor greșit');
-  const nextNo = (advances.length||0)+1;
-  const {error}=await sb.from('advances').insert({worker_id,amount,comment,operator_name:currentUser.email,code:codeFor(nextNo),sms_sent:false});
-  if(error) return toast('Eroare avans: '+error.message);
-  $('aAmount').value=''; $('aPin').value=''; $('aComment').value=''; await loadAll(); render();
-}
-
-function totalAdv(workerId){ return advances.filter(a=>a.worker_id===workerId).reduce((s,a)=>s+Number(a.amount||0),0); }
-function exportCSV(){
-  let csv='Muncitor,Telefon,Salariu,Avansuri,Rest\n';
-  workers.filter(w=>w.active!==false).forEach(w=>{ const av=totalAdv(w.id); csv += `"${w.name}","${w.phone||''}",${w.salary||0},${av},${Number(w.salary||0)-av}\n`; });
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='brickstone_raport.csv'; a.click();
-}
-
-function loginHtml(){return `<div class="login"><div class="loginbox card"><h1>Autentificare</h1><p class="muted">Admin sau operator</p><div class="form"><input id="loginEmail" placeholder="Utilizator" value="piatrata@yandex.com"><input id="loginPass" placeholder="Parolă" type="password" value="1234"><button class="btn red" onclick="login()">Intră</button><div class="muted">Admin: <b>piatrata@yandex.com / 1234</b><br>Operator: <b>Serghei / 1111</b></div></div></div></div>`;}
-function menu(){ const items=[['dashboard','Dashboard'],['advances','Avansuri']]; if(currentUser.role==='admin') items.push(['workers','Muncitori'],['operators','Operatori'],['reports','Rapoarte']); return `<div class="tabs">${items.map(i=>`<button class="tab ${tab===i[0]?'active':''}" onclick="tab='${i[0]}';render()">${i[1]}</button>`).join('')}</div>`; }
-function shell(content){return `<div class="top"><div class="wrap"><div><div class="brand">BRICKSTONE MANAGER PRO</div><div class="muted" style="color:#cbd5e1">${currentUser.email}</div></div><div><span class="role">${currentUser.role==='admin'?'Administrator':'Operator'}</span> <button class="btn light" onclick="logout()">Ieșire</button></div></div></div><div class="wrap">${menu()}${content}</div>`;}
-function dashboard(){ const active=workers.filter(w=>w.active!==false); const totalA=advances.reduce((s,a)=>s+Number(a.amount||0),0); const totalS=active.reduce((s,w)=>s+Number(w.salary||0),0); return `<div class="grid"><div class="card stat col-3"><div class="t">Muncitori</div><div class="n">${active.length}</div></div><div class="card stat col-3"><div class="t">Total avansuri</div><div class="n">${money(totalA)}</div></div>${currentUser.role==='admin'?`<div class="card stat col-3"><div class="t">Rest total</div><div class="n">${money(totalS-totalA)}</div></div>`:''}<div class="card stat col-3"><div class="t">Avansuri</div><div class="n">${advances.length}</div></div><div class="card col-12"><h3>Ultimele avansuri</h3>${advanceTable()}</div></div>`; }
-function advancesPage(){ return `<div class="grid"><div class="card col-5"><h3>Acordă avans</h3><div class="form"><label>Muncitor</label><select id="aWorker"><option value="">Alege muncitor</option>${workers.filter(w=>w.active!==false).map(w=>`<option value="${w.id}">${w.name}</option>`).join('')}</select><label>Suma avans lei</label><input id="aAmount" type="number"><label>PIN muncitor</label><input id="aPin"><label>Comentariu</label><textarea id="aComment"></textarea><button class="btn red" onclick="saveAdvance()">Salvează avans</button></div></div><div class="card col-7"><h3>Istoric avansuri</h3>${advanceTable()}</div></div>`; }
-function workersPage(){ return `<div class="grid"><div class="card col-4"><h3>${$('workerEditId')?'Editează':'Adaugă'} muncitor</h3><input type="hidden" id="workerEditId"><div class="form"><label>Nume</label><input id="wName"><label>Telefon</label><input id="wPhone" placeholder="+373..."><label>PIN confirmare</label><input id="wPin"><label>Salariu total lei</label><input id="wSalary" type="number"><button class="btn red" onclick="saveWorker()">Salvează muncitor</button><button class="btn light" onclick="clearWorkerForm()">Curăță</button></div></div><div class="card col-8"><h3>Lista muncitori</h3>${workersTable()}</div></div>`; }
-function operatorsPage(){ return `<div class="grid"><div class="card col-4"><h3>Adaugă operator</h3><div class="form"><label>Nume / utilizator</label><input id="opEmail"><label>Parolă</label><input id="opPass"><button class="btn red" onclick="addOperator()">Adaugă operator</button></div></div><div class="card col-8"><h3>Operatori</h3><table><tr><th>Utilizator</th><th>Rol</th><th>Status</th><th>Acțiuni</th></tr>${users.filter(u=>u.role==='operator').map(u=>`<tr><td>${u.email}</td><td>${u.role}</td><td><span class="pill ${u.active!==false?'ok':'off'}">${u.active!==false?'activ':'dezactivat'}</span></td><td class="actions"><button class="btn small" onclick="changeOperatorPass('${u.id}')">Schimbă parola</button><button class="btn small gray" onclick="toggleOperator('${u.id}',${u.active!==false})">${u.active!==false?'Dezactivează':'Activează'}</button></td></tr>`).join('')}</table></div></div>`; }
-function reportsPage(){ return `<div class="card"><h3>Raport Admin</h3><button class="btn" onclick="exportCSV()">Export Excel CSV</button><br><br>${workersTable(true)}</div>`; }
-function advanceTable(){ if(!advances.length) return `<p class="muted">Nu sunt avansuri.</p>`; return `<table><tr><th>Cod</th><th>Data</th><th>Muncitor</th><th>Suma</th><th>Operator</th><th>Comentariu</th></tr>${advances.map((a,i)=>{const w=workers.find(x=>x.id===a.worker_id)||{};return `<tr><td>${a.code||codeFor(i+1)}</td><td>${new Date(a.created_at).toLocaleString('ro-RO')}</td><td>${w.name||'-'}</td><td>${money(a.amount)}</td><td>${a.operator_name||''}</td><td>${a.comment||''}</td></tr>`}).join('')}</table>`; }
-function workersTable(report=false){ const list=workers.filter(w=>w.active!==false); if(!list.length) return `<p class="muted">Nu sunt muncitori.</p>`; return `<table><tr><th>Nume</th><th>Telefon</th>${currentUser.role==='admin'?'<th>Salariu</th><th>Avansuri</th><th>Rest</th>':''}${!report&&currentUser.role==='admin'?'<th>Acțiuni</th>':''}</tr>${list.map(w=>{const av=totalAdv(w.id);return `<tr><td>${w.name}</td><td>${w.phone||''}</td>${currentUser.role==='admin'?`<td>${money(w.salary)}</td><td>${money(av)}</td><td>${money(Number(w.salary||0)-av)}</td>`:''}${!report&&currentUser.role==='admin'?`<td class="actions"><button class="btn small" onclick="editWorker('${w.id}')">Editează</button><button class="btn small gray" onclick="deleteWorker('${w.id}')">Șterge</button></td>`:''}</tr>`}).join('')}</table>`; }
-async function render(){ const app=$('app'); if(!currentUser){ app.innerHTML=loginHtml(); return; } await loadAll(); let content= dashboard(); if(tab==='advances') content=advancesPage(); if(tab==='workers') content=workersPage(); if(tab==='operators') content=operatorsPage(); if(tab==='reports') content=reportsPage(); app.innerHTML=shell(content); }
-render();
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brickstone Manager Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header><h1>Brickstone Manager Pro</h1><button id="logoutBtn" class="hidden">Ieșire</button></header>
+  <main id="app"></main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
