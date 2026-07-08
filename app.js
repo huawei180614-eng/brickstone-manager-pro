@@ -149,9 +149,14 @@ async function addWorker() {
 }
 
 async function deleteWorker(id) {
-  if (!confirm("Ștergi muncitorul?")) return;
-  await sb.from("workers").delete().eq("id", id);
+  if (!confirm("Dezactivezi muncitorul?")) return;
+
+  await sb.from("workers")
+    .update({ active: false })
+    .eq("id", id);
+
   location.reload();
+}
 }
 
 async function addOperator() {
