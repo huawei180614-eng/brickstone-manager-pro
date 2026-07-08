@@ -9,25 +9,22 @@
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <div class="brand">BRICKSTONE</div>
-      <div class="subtitle">Manager Pro · Avansuri muncitori</div>
-    </div>
+    <div><strong>BRICKSTONE</strong><span>Manager Pro</span></div>
     <button id="logoutBtn" class="ghost hidden">Ieșire</button>
   </header>
 
   <main class="container">
     <section id="loginView" class="card login-card">
       <h1>Autentificare</h1>
-      <p class="muted">Admin vede toate cifrele. Operatorul adaugă avansuri fără rapoarte financiare.</p>
+      <p class="muted">Admin vede cifrele. Operatorul poate doar adăuga avansuri.</p>
       <label>Utilizator</label>
       <input id="loginUser" placeholder="piatrata@yandex.com sau Serghei" />
       <label>Parolă</label>
       <input id="loginPass" type="password" placeholder="Parolă" />
-      <button id="loginBtn">Intră în aplicație</button>
-      <div class="hint">
-        <b>Demo:</b><br />
-        Admin: piatrata@yandex.com / 1234<br />
+      <button id="loginBtn">Intră</button>
+      <div class="demo">
+        <b>Conturi:</b><br>
+        Admin: piatrata@yandex.com / 1234<br>
         Operator: Serghei / 1111
       </div>
     </section>
@@ -35,67 +32,53 @@
     <section id="appView" class="hidden">
       <div class="card userbar">
         <div>
-          <h2 id="helloText">Bun venit</h2>
-          <span id="roleBadge" class="badge"></span>
+          <h2 id="hello"></h2>
+          <p id="roleText" class="pill"></p>
         </div>
-        <div id="modeInfo" class="muted small"></div>
+        <div id="storageMode" class="mode"></div>
       </div>
 
-      <section id="adminDashboard" class="grid stats hidden">
+      <div id="adminStats" class="stats hidden">
         <div class="stat"><span>Muncitori</span><b id="statWorkers">0</b></div>
         <div class="stat"><span>Total avansuri</span><b id="statAdvances">0 lei</b></div>
-        <div class="stat"><span>Rest total</span><b id="statRest">0 lei</b></div>
-        <div class="stat"><span>SMS</span><b id="statSms">0</b></div>
-      </section>
+        <div class="stat"><span>Rest de plată</span><b id="statRest">0 lei</b></div>
+      </div>
 
-      <section class="grid two">
-        <div class="card">
+      <section class="grid2">
+        <div id="workerCard" class="card">
           <h3>Adaugă muncitor</h3>
-          <label>Nume</label><input id="workerName" placeholder="Ion Popescu" />
-          <label>Telefon</label><input id="workerPhone" placeholder="+373..." />
-          <label>PIN confirmare</label><input id="workerPin" placeholder="1234" />
-          <label id="salaryLabel">Salariu / total calculat lei</label><input id="workerSalary" type="number" placeholder="10000" />
-          <label>Șantier</label><input id="workerSite" placeholder="Bălți / Telenești" />
+          <label>Nume</label><input id="wName" placeholder="Nume muncitor" />
+          <label>Telefon</label><input id="wPhone" placeholder="+373..." />
+          <label>Salariu / total lei</label><input id="wSalary" type="number" placeholder="Ex: 12000" />
+          <label>PIN muncitor</label><input id="wPin" placeholder="Ex: 1234" />
           <button id="addWorkerBtn">Salvează muncitor</button>
+          <p class="muted small">Operatorul nu vede salariile și totalurile.</p>
         </div>
 
         <div class="card">
           <h3>Acordă avans</h3>
-          <label>Muncitor</label><select id="advanceWorker"></select>
-          <label>Suma avans lei</label><input id="advanceAmount" type="number" placeholder="1000" />
-          <label>PIN muncitor</label><input id="advancePin" placeholder="PIN" />
-          <label>Comentariu / lucrare</label><textarea id="advanceComment" placeholder="Avans săptămânal"></textarea>
-          <button id="addAdvanceBtn">Salvează avans</button>
-          <p class="muted small">După integrarea furnizorului SMS Moldova, mesajul se va trimite automat.</p>
+          <label>Muncitor</label><select id="workerSelect"></select>
+          <label>Suma avans</label><input id="aAmount" type="number" placeholder="Ex: 1000" />
+          <label>PIN confirmare</label><input id="aPin" placeholder="PIN muncitor" />
+          <label>Comentariu</label><textarea id="aComment" placeholder="Opțional"></textarea>
+          <button id="addAdvanceBtn">Salvează avans + SMS</button>
         </div>
       </section>
 
       <section id="adminReport" class="card hidden">
-        <div class="row-between">
+        <div class="row">
           <h3>Raport Admin</h3>
           <button id="exportBtn" class="secondary">Export Excel CSV</button>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Muncitor</th><th>Telefon</th><th>Șantier</th><th>Salariu</th><th>Avansuri</th><th>Rest</th></tr></thead>
-            <tbody id="workersTable"></tbody>
-          </table>
-        </div>
+        <div class="table-wrap"><table><thead><tr><th>Muncitor</th><th>Telefon</th><th>Salariu</th><th>Avansuri</th><th>Rest</th></tr></thead><tbody id="workersTable"></tbody></table></div>
       </section>
 
       <section class="card">
         <h3>Istoric avansuri</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Data</th><th>Muncitor</th><th>Suma</th><th>Operator</th><th>Cod</th><th>SMS</th></tr></thead>
-            <tbody id="advancesTable"></tbody>
-          </table>
-        </div>
+        <div class="table-wrap"><table><thead><tr><th>Data</th><th>Muncitor</th><th>Suma</th><th>Operator</th><th>SMS</th><th>Bon</th></tr></thead><tbody id="advancesTable"></tbody></table></div>
       </section>
     </section>
   </main>
-
-  <div id="toast" class="toast hidden"></div>
   <script src="app.js"></script>
 </body>
 </html>

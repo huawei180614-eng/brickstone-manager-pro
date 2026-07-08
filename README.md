@@ -1,21 +1,21 @@
 # Brickstone Manager Pro
 
-Aplicație web pentru evidența muncitorilor și avansurilor Brickstone.
-
-## Conține
+Funcții:
 - Admin / Operator
 - Muncitori
-- Avansuri
-- Rapoarte Admin
+- Avansuri cu PIN
+- Admin vede totaluri și resturi
+- Operator nu vede cifrele
 - Export CSV
-- Pregătire SMS Moldova prin `sms_logs`
-- Supabase + fallback localStorage
+- Bon printabil
+- Pregătit pentru Supabase și SMS Moldova
 
-## Pași
-1. Rulează `sql/setup.sql` în Supabase.
-2. În `app.js`, înlocuiește `PASTE_SUPABASE_PUBLISHABLE_KEY_HERE` cu cheia Publishable Key.
-3. Publică proiectul pe Vercel.
+## Conturi demo
+Admin: piatrata@yandex.com / 1234
+Operator: Serghei / 1111
 
-## Login demo
-Admin: `piatrata@yandex.com` / `1234`
-Operator: `Serghei` / `1111`
+## Supabase
+În app.js completează:
+SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_...'
+
+Rulează scriptul din sql/setup.sql în Supabase.
