@@ -1,21 +1,15 @@
-# Brickstone Manager Pro
+# Brickstone Manager Pro v1.1
 
 Funcții:
 - Admin / Operator
-- Muncitori
-- Avansuri cu PIN
-- Admin vede totaluri și resturi
-- Operator nu vede cifrele
+- Admin gestionează operatori și muncitori
+- Schimbare parolă operator
+- Activare / dezactivare operator
+- Adăugare, editare, ștergere/dezactivare muncitori
+- Operator adaugă doar avansuri
+- Cod unic AV-000001 pentru fiecare avans
 - Export CSV
-- Bon printabil
-- Pregătit pentru Supabase și SMS Moldova
 
-## Conturi demo
-Admin: piatrata@yandex.com / 1234
-Operator: Serghei / 1111
-
-## Supabase
-În app.js completează:
-SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_...'
-
-Rulează scriptul din sql/setup.sql în Supabase.
+Login demo:
+- Admin: piatrata@yandex.com / 1234
+- Operator: Serghei / 1111
