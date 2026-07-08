@@ -5,75 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Brickstone Manager Pro</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <header><div class="brand">BRICKSTONE</div><div>Manager Pro — Avansuri muncitori</div></header>
-  <main class="wrap">
-    <section id="login" class="card">
-      <h2>Autentificare</h2>
-      <input id="loginUser" placeholder="Admin email sau operator" autocomplete="username">
-      <input id="loginPass" type="password" placeholder="Parolă" autocomplete="current-password">
-      <button onclick="login()">Intră</button>
-      <p class="muted">Admin: piatrata@yandex.com / 1234 · Operator: Serghei / 1111</p>
-    </section>
-
-    <section id="app" class="hidden">
-      <div class="card topbar">
-        <div><h2 id="hello"></h2><span id="role" class="badge"></span></div>
-        <button class="ghost" onclick="logout()">Ieșire</button>
-      </div>
-
-      <div id="adminStats" class="stats hidden">
-        <div class="stat"><span>Muncitori activi</span><b id="stWorkers">0</b></div>
-        <div class="stat"><span>Avansuri total</span><b id="stAdvances">0 lei</b></div>
-        <div class="stat"><span>Rest total</span><b id="stRest">0 lei</b></div>
-      </div>
-
-      <section id="adminOperators" class="card hidden">
-        <h3>Gestionare operatori</h3>
-        <div class="grid2">
-          <input id="opName" placeholder="Nume operator">
-          <input id="opPass" placeholder="Parolă operator">
-        </div>
-        <button onclick="addOperator()">Adaugă operator</button>
-        <table><thead><tr><th>Operator</th><th>Status</th><th>Parolă nouă</th><th>Acțiuni</th></tr></thead><tbody id="operatorsTable"></tbody></table>
-      </section>
-
-      <section id="adminWorkers" class="card hidden">
-        <h3>Gestionare muncitori</h3>
-        <div class="grid2">
-          <input id="wName" placeholder="Nume muncitor">
-          <input id="wPhone" placeholder="Telefon">
-          <input id="wSalary" type="number" placeholder="Salariu / sumă totală lei">
-          <input id="wPin" placeholder="PIN muncitor">
-        </div>
-        <button onclick="saveWorker()" id="workerBtn">Adaugă muncitor</button>
-        <button class="ghost hidden" onclick="cancelEditWorker()" id="cancelWorkerBtn">Renunță editare</button>
-        <table><thead><tr><th>Nume</th><th>Telefon</th><th>Salariu</th><th>PIN</th><th>Status</th><th>Acțiuni</th></tr></thead><tbody id="workersAdminTable"></tbody></table>
-      </section>
-
-      <section class="card">
-        <h3>Acordă avans</h3>
-        <select id="workerSelect"></select>
-        <input id="advanceAmount" type="number" placeholder="Suma avans lei">
-        <input id="advancePin" placeholder="PIN confirmare muncitor">
-        <textarea id="advanceComment" placeholder="Comentariu opțional"></textarea>
-        <button onclick="addAdvance()">Salvează avans</button>
-      </section>
-
-      <section id="adminReport" class="card hidden">
-        <h3>Raport administrator</h3>
-        <input id="search" placeholder="Caută muncitor..." oninput="render()">
-        <table><thead><tr><th>Muncitor</th><th>Telefon</th><th>Salariu</th><th>Avansuri</th><th>Rest</th></tr></thead><tbody id="reportTable"></tbody></table>
-        <button class="green" onclick="exportCSV()">Export Excel CSV</button>
-      </section>
-
-      <section class="card">
-        <h3>Istoric avansuri</h3>
-        <table><thead><tr><th>Cod</th><th>Data</th><th>Muncitor</th><th>Suma</th><th>Operator</th><th>Comentariu</th></tr></thead><tbody id="advancesTable"></tbody></table>
-      </section>
-    </section>
-  </main>
+  <div id="app"></div>
   <script src="app.js"></script>
 </body>
 </html>
