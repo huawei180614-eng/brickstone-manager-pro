@@ -1,13 +1,14 @@
-# Brickstone Manager Pro v1.4
-
-Funcții:
-- Admin / Operator
-- Admin gestionează operatori și parole
-- Admin adaugă, editează, dezactivează muncitori
-- Operatorul doar acordă avansuri
-- Date salvate în Supabase
-- Export CSV pentru Excel
-
-Login inițial:
-- Admin: piatrata@yandex.com / 1234
-- Operator: Serghei / 1111
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brickstone Manager Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,1 +1,14 @@
-*{box-sizing:border-box} body{margin:0;background:#f4f5f7;color:#171717;font-family:Arial,Helvetica,sans-serif}.topbar{background:#111;color:#fff;padding:16px 22px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:900;color:#e11d2e;font-size:28px;letter-spacing:.5px}.subtitle{font-size:14px;color:#ddd}.wrap{max-width:1180px;margin:auto;padding:18px}.card{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:18px;margin:14px 0}.login-card{max-width:430px;margin:40px auto}h1,h2{margin:0 0 12px}.muted{color:#666}.small{font-size:13px}.hidden{display:none!important}.hint{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:12px}.row{display:flex;align-items:center}.between{justify-content:space-between}.gap{gap:10px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}.grid4{display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr;gap:10px}input,select,button{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px}button{cursor:pointer;border:0;font-weight:700}.btn.primary{background:#dc2626;color:white}.btn.success{background:#15803d;color:white}.btn.ghost{background:#333;color:white;width:auto}.btn.dark{background:#111;color:white}.btn.warn{background:#f59e0b;color:#111}.btn.light{background:#e5e7eb;color:#111}.badge{display:inline-block;border-radius:100px;padding:6px 10px;font-size:13px;font-weight:700;background:#e5e7eb}.badge.admin{background:#fee2e2;color:#991b1b}.badge.operator{background:#dcfce7;color:#166534}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:#111;color:white;border-radius:16px;padding:18px}.stat span{display:block;color:#cfcfcf}.stat b{display:block;font-size:28px;color:#facc15;margin-top:6px}.tableWrap{overflow:auto;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:720px}th,td{border-bottom:1px solid #e5e7eb;padding:10px;text-align:left;font-size:14px}th{background:#f8fafc}.actions{display:flex;gap:6px}.actions button{padding:8px;width:auto}.danger{background:#dc2626;color:#fff}.ok{background:#16a34a;color:#fff}@media(max-width:800px){.grid2,.grid3,.grid4,.stats{grid-template-columns:1fr}.row{display:block}.btn.ghost{width:100%;margin-top:10px}}
+# Brickstone Manager Pro v1.5
+
+Funcții:
+- Login admin/operator din Supabase
+- Admin gestionează operatori și parole
+- Admin adaugă/editează/dezactivează muncitori
+- Operator acordă avansuri
+- Datele se salvează în Supabase
+
+Login inițial:
+- Admin: piatrata@yandex.com / 1234
+- Operator: Serghei / 1111
+
+Înainte de upload, rulează `sql/setup_v15.sql` în Supabase SQL Editor.
