@@ -1,0 +1,109 @@
+const SUPABASE_URL = "https://gewgugneceqxwovkstqs.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Dy5AfagRaYpfkth3sy1MCA_ZDHv7jds";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const app = document.getElementById('app');
+let sessionUser = JSON.parse(localStorage.getItem('brickstone_session') || 'null');
+let workers = [], advances = [], users = [];
+
+const lei = n => `${Number(n||0).toLocaleString('ro-RO')} lei`;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const today = () => new Date().toLocaleString('ro-RO');
+
+async function loadAll(){
+  const [w,a,u] = await Promise.all([
+    sb.from('workers').select('*').order('created_at',{ascending:false}),
+    sb.from('advances').select('*').order('created_at',{ascending:false}),
+    sb.from('users_roles').select('*').order('created_at',{ascending:false})
+  ]);
+  if(w.error||a.error||u.error){ alert('Eroare Supabase: '+(w.error?.message||a.error?.message||u.error?.message)); return; }
+  workers = w.data||[]; advances = a.data||[]; users = u.data||[];
+}
+
+function renderLogin(){
+  app.innerHTML = `<div class="wrap"><div class="card login">
+    <h1>Autentificare</h1><p class="muted">Admin sau operator</p>
+    <input id="loginUser" placeholder="Utilizator" value="piatrata@yandex.com">
+    <input id="loginPass" placeholder="Parolă" type="password" value="1234">
+    <button onclick="login()">Intră</button>
+    <div class="card"><b>Admin:</b> piatrata@yandex.com / 1234<br><b>Operator:</b> Serghei / 1111</div>
+  </div></div>`;
+}
+
+async function login(){
+  const email = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const {data,error} = await sb.from('users_roles').select('*').eq('email', email).eq('password', pass).maybeSingle();
+  if(error){ alert('Eroare login: '+error.message); return; }
+  if(!data || data.active === false){ alert('Utilizator sau parolă greșită'); return; }
+  sessionUser = data; localStorage.setItem('brickstone_session', JSON.stringify(data));
+  await boot();
+}
+function logout(){ localStorage.removeItem('brickstone_session'); sessionUser=null; renderLogin(); }
+
+async function boot(){
+  if(!sessionUser){ renderLogin(); return; }
+  await loadAll();
+  if(sessionUser.role==='admin') renderAdmin(); else renderOperator();
+}
+
+function stats(){
+  const activeWorkers = workers.filter(w=>w.active!==false);
+  const totalSalary = activeWorkers.reduce((s,w)=>s+Number(w.salary||0),0);
+  const totalAdv = advances.reduce((s,a)=>s+Number(a.amount||0),0);
+  return {activeWorkers,totalSalary,totalAdv,rest: totalSalary-totalAdv};
+}
+
+function header(title, role){return `<div class="card top"><div><h1>${title}</h1><span class="badge">${role}</span><p class="muted">Date salvate online în Supabase</p></div><button class="dark" onclick="logout()">Ieșire</button></div>`}
+function statCards(){const s=stats();return `<div class="grid"><div class="stat">Muncitori<b>${s.activeWorkers.length}</b></div><div class="stat">Total avansuri<b>${lei(s.totalAdv)}</b></div><div class="stat">Rest total<b>${lei(s.rest)}</b></div><div class="stat">Operatori<b>${users.filter(u=>u.role==='operator'&&u.active!==false).length}</b></div></div>`}
+
+function renderAdmin(){
+  app.innerHTML = `<div class="wrap">${header('Bun venit, Admin Brickstone','Administrator')}${statCards()}
+  <div class="cols">
+    <div class="card"><h2>Adaugă / editează muncitor</h2>
+      <input id="wId" type="hidden"><input id="wName" placeholder="Nume"><input id="wPhone" placeholder="Telefon +373..."><input id="wPin" placeholder="PIN confirmare"><input id="wSalary" type="number" placeholder="Salariu total lei"><button onclick="saveWorker()">Salvează muncitor</button>
+    </div>
+    <div class="card"><h2>Acordă avans</h2>${advanceForm()}</div>
+  </div>
+  <div class="card"><h2>Gestionare operatori</h2><div class="cols"><div><input id="opName" placeholder="Nume operator / login"><input id="opPass" placeholder="Parolă"><button onclick="addOperator()">Adaugă operator</button></div><div>${operatorsTable()}</div></div></div>
+  <div class="card"><h2>Muncitori</h2>${workersTable(true)}</div>
+  <div class="card"><h2>Raport Admin</h2><button class="dark" onclick="exportCSV()">Export Excel CSV</button>${reportTable()}</div>
+  </div>`;
+}
+function renderOperator(){
+  app.innerHTML = `<div class="wrap">${header('Bun venit, '+esc(sessionUser.email),'Operator')}
+    <div class="card"><h2>Acordă avans</h2>${advanceForm()}</div>
+    <div class="card"><h2>Muncitori activi</h2>${workersTable(false)}</div>
+  </div>`;
+}
+function advanceForm(){return `<select id="advWorker"><option value="">Alege muncitor</option>${workers.filter(w=>w.active!==false).map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select><input id="advAmount" type="number" placeholder="Suma avans lei"><input id="advPin" placeholder="PIN muncitor"><textarea id="advComment" placeholder="Comentariu"></textarea><button onclick="saveAdvance()">Salvează avans</button>`}
+
+async function saveWorker(){
+  const id=document.getElementById('wId').value;
+  const row={name:wName.value.trim(), phone:wPhone.value.trim(), pin:wPin.value.trim(), salary:Number(wSalary.value||0), active:true};
+  if(!row.name){alert('Scrie numele');return}
+  const res = id ? await sb.from('workers').update(row).eq('id',id) : await sb.from('workers').insert(row);
+  if(res.error){alert(res.error.message);return} await boot();
+}
+async function editWorker(id){ const w=workers.find(x=>x.id===id); if(!w)return; document.getElementById('wId').value=w.id; wName.value=w.name||''; wPhone.value=w.phone||''; wPin.value=w.pin||''; wSalary.value=w.salary||0; window.scrollTo(0,0); }
+async function deleteWorker(id){ if(!confirm('Dezactivezi muncitorul?'))return; const res=await sb.from('workers').update({active:false}).eq('id',id); if(res.error)alert(res.error.message); else boot(); }
+async function saveAdvance(){
+  const wid=advWorker.value; const worker=workers.find(w=>w.id===wid); if(!worker){alert('Alege muncitor');return}
+  if(String(worker.pin||'') !== String(advPin.value.trim())){alert('PIN muncitor greșit');return}
+  const amount=Number(advAmount.value||0); if(amount<=0){alert('Scrie suma');return}
+  const code='AV-'+String(advances.length+1).padStart(6,'0');
+  const row={worker_id:wid, amount, comment:advComment.value.trim(), operator_name:sessionUser.email, code};
+  const res=await sb.from('advances').insert(row);
+  if(res.error){alert(res.error.message);return} alert('Avans salvat: '+code); await boot();
+}
+async function addOperator(){
+  const email=opName.value.trim(), password=opPass.value.trim(); if(!email||!password){alert('Scrie operator și parolă');return}
+  const res=await sb.from('users_roles').insert({email,password,role:'operator',active:true}); if(res.error)alert(res.error.message); else boot();
+}
+async function changeOpPass(id){ const password=prompt('Parola nouă:'); if(!password)return; const res=await sb.from('users_roles').update({password}).eq('id',id); if(res.error)alert(res.error.message); else boot(); }
+async function toggleOp(id,active){ const res=await sb.from('users_roles').update({active:!active}).eq('id',id); if(res.error)alert(res.error.message); else boot(); }
+function workersTable(admin){return `<table><thead><tr><th>Nume</th><th>Telefon</th>${admin?'<th>Salariu</th><th>Avansuri</th><th>Rest</th><th>Acțiuni</th>':''}</tr></thead><tbody>${workers.filter(w=>w.active!==false).map(w=>{const adv=advances.filter(a=>a.worker_id===w.id).reduce((s,a)=>s+Number(a.amount||0),0);return `<tr><td>${esc(w.name)}</td><td>${esc(w.phone)}</td>${admin?`<td>${lei(w.salary)}</td><td>${lei(adv)}</td><td>${lei(Number(w.salary||0)-adv)}</td><td class="actions"><button class="small" onclick="editWorker('${w.id}')">Editează</button><button class="small danger" onclick="deleteWorker('${w.id}')">Șterge</button></td>`:''}</tr>`}).join('')}</tbody></table>`}
+function operatorsTable(){return `<table><tbody>${users.filter(u=>u.role==='operator').map(u=>`<tr><td>${esc(u.email)}</td><td>${u.active===false?'Inactiv':'Activ'}</td><td class="actions"><button class="small" onclick="changeOpPass('${u.id}')">Parolă</button><button class="small gray" onclick="toggleOp('${u.id}',${u.active!==false})">${u.active===false?'Activează':'Dezactivează'}</button></td></tr>`).join('')}</tbody></table>`}
+function reportTable(){return `<table><thead><tr><th>Cod</th><th>Muncitor</th><th>Suma</th><th>Operator</th><th>Comentariu</th><th>Data</th></tr></thead><tbody>${advances.map(a=>`<tr><td>${esc(a.code)}</td><td>${esc(workers.find(w=>w.id===a.worker_id)?.name||'')}</td><td>${lei(a.amount)}</td><td>${esc(a.operator_name)}</td><td>${esc(a.comment)}</td><td>${new Date(a.created_at).toLocaleString('ro-RO')}</td></tr>`).join('')}</tbody></table>`}
+function exportCSV(){let csv='Cod,Muncitor,Suma,Operator,Comentariu,Data\n';advances.forEach(a=>csv+=`${a.code},${workers.find(w=>w.id===a.worker_id)?.name||''},${a.amount},${a.operator_name},${a.comment||''},${a.created_at}\n`);const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='raport_avansuri.csv';a.click();}
+boot();

@@ -1,0 +1,12 @@
+# Brickstone Manager Pro
+
+Aplicație pentru evidența muncitorilor și avansurilor Brickstone.
+
+## Login
+- Admin: `piatrata@yandex.com` / `1234`
+- Operator: `Serghei` / `1111`
+
+## Instalare
+1. Rulează în Supabase SQL Editor: `sql/setup_final.sql`
+2. Încarcă în GitHub: `index.html`, `app.js`, `styles.css`, `README.md`, folderul `sql`
+3. Deschide GitHub Pages și apasă Ctrl+F5.
