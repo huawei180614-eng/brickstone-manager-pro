@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brickstone Manager Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand">BRICKSTONE</div>
+      <div class="subtitle">Manager Pro · Avansuri muncitori</div>
+    </div>
+    <button id="logoutBtn" class="ghost hidden">Ieșire</button>
+  </header>
+
+  <main class="container">
+    <section id="loginView" class="card login-card">
+      <h1>Autentificare</h1>
+      <p class="muted">Admin vede toate cifrele. Operatorul adaugă avansuri fără rapoarte financiare.</p>
+      <label>Utilizator</label>
+      <input id="loginUser" placeholder="piatrata@yandex.com sau Serghei" />
+      <label>Parolă</label>
+      <input id="loginPass" type="password" placeholder="Parolă" />
+      <button id="loginBtn">Intră în aplicație</button>
+      <div class="hint">
+        <b>Demo:</b><br />
+        Admin: piatrata@yandex.com / 1234<br />
+        Operator: Serghei / 1111
+      </div>
+    </section>
+
+    <section id="appView" class="hidden">
+      <div class="card userbar">
+        <div>
+          <h2 id="helloText">Bun venit</h2>
+          <span id="roleBadge" class="badge"></span>
+        </div>
+        <div id="modeInfo" class="muted small"></div>
+      </div>
+
+      <section id="adminDashboard" class="grid stats hidden">
+        <div class="stat"><span>Muncitori</span><b id="statWorkers">0</b></div>
+        <div class="stat"><span>Total avansuri</span><b id="statAdvances">0 lei</b></div>
+        <div class="stat"><span>Rest total</span><b id="statRest">0 lei</b></div>
+        <div class="stat"><span>SMS</span><b id="statSms">0</b></div>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <h3>Adaugă muncitor</h3>
+          <label>Nume</label><input id="workerName" placeholder="Ion Popescu" />
+          <label>Telefon</label><input id="workerPhone" placeholder="+373..." />
+          <label>PIN confirmare</label><input id="workerPin" placeholder="1234" />
+          <label id="salaryLabel">Salariu / total calculat lei</label><input id="workerSalary" type="number" placeholder="10000" />
+          <label>Șantier</label><input id="workerSite" placeholder="Bălți / Telenești" />
+          <button id="addWorkerBtn">Salvează muncitor</button>
+        </div>
+
+        <div class="card">
+          <h3>Acordă avans</h3>
+          <label>Muncitor</label><select id="advanceWorker"></select>
+          <label>Suma avans lei</label><input id="advanceAmount" type="number" placeholder="1000" />
+          <label>PIN muncitor</label><input id="advancePin" placeholder="PIN" />
+          <label>Comentariu / lucrare</label><textarea id="advanceComment" placeholder="Avans săptămânal"></textarea>
+          <button id="addAdvanceBtn">Salvează avans</button>
+          <p class="muted small">După integrarea furnizorului SMS Moldova, mesajul se va trimite automat.</p>
+        </div>
+      </section>
+
+      <section id="adminReport" class="card hidden">
+        <div class="row-between">
+          <h3>Raport Admin</h3>
+          <button id="exportBtn" class="secondary">Export Excel CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Muncitor</th><th>Telefon</th><th>Șantier</th><th>Salariu</th><th>Avansuri</th><th>Rest</th></tr></thead>
+            <tbody id="workersTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Istoric avansuri</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Muncitor</th><th>Suma</th><th>Operator</th><th>Cod</th><th>SMS</th></tr></thead>
+            <tbody id="advancesTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="app.js"></script>
+</body>
+</html>
