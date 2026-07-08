@@ -5,7 +5,7 @@ const app = document.getElementById('app');
 let sessionUser = JSON.parse(localStorage.getItem('brickstone_session') || 'null');
 let workers = [], advances = [], users = [];
 const fmt = n => `${Number(n||0).toLocaleString('ro-RO')} lei`;
-const esc = s => String(s ?? '').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const today = () => new Date().toLocaleDateString('ro-RO');
 async function loadAll(){
   const [w,a,u] = await Promise.all([
