@@ -1,5 +1,17 @@
 const SUPABASE_URL="https://gewgugneceqxwovkstqs.supabase.co";
 const SUPABASE_KEY="sb_publishable_Dy5AfagRaYpfkth3sy1MCA_ZDHv7jds";
+const TELEGRAM_BOT_TOKEN = "8728003141:AAEwhVI0488DjKV4booqeQSWhL5godM2ne4";
+
+async function sendTelegram(chatId, text) {
+  if (!chatId) return false;
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const r = await fetch(url, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({chat_id: chatId, text})
+  });
+  return r.ok;
+}
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const app=document.getElementById('app');
 let sessionUser=JSON.parse(localStorage.getItem('brickstone_user')||'null');
@@ -47,6 +59,28 @@ async function deleteWorker(id){if(!confirm('Dezactivezi muncitorul?'))return;aw
 async function addOperator(){if(!opName.value||!opPass.value){alert('Completează operator și parolă');return}await sb.from('users_roles').insert({email:opName.value,password:opPass.value,role:'operator',active:true});await boot()}
 async function changePassword(id){const p=prompt('Parola nouă:');if(!p)return;await sb.from('users_roles').update({password:p}).eq('id',id);alert('Parola schimbată')}
 async function deleteOperator(id){if(!confirm('Dezactivezi operatorul?'))return;await sb.from('users_roles').update({active:false}).eq('id',id);await boot()}
-async function addAdvance(){const w=state.workers.find(x=>x.id===advWorker.value);if(!w){alert('Alege muncitorul');return}if(w.pin&&advPin.value.trim()!==String(w.pin)){alert('PIN greșit');return}const amount=Number(advAmount.value||0);if(!amount){alert('Introdu suma');return}const rest=workerRest(w)-amount;const {data,error}=await sb.from('advances').insert({worker_id:w.id,amount,comment:advComment.value,operator_name:sessionUser.email,sms_sent:false}).select().single();if(error){alert(error.message);return}const message=`Brickstone: Bună, ${w.name}. Ai primit avans ${amount} lei. Rest salariu: ${rest} lei. Data: ${nowRO()}.`;await sb.from('sms_logs').insert({advance_id:data.id,phone:w.email||w.phone||'',message,status:w.email?'email-ready':'missing-email'});if(w.email){const subject=encodeURIComponent('Avans Brickstone');const body=encodeURIComponent(`Bună, ${w.name}.\n\nAi primit avans: ${amount} lei\nRest salariu: ${rest} lei\nData: ${nowRO()}\nOperator: ${sessionUser.email}\n\nBrickstone`);window.open(`mailto:${encodeURIComponent(w.email)}?subject=${subject}&body=${body}`,'_blank')}else alert('Avans salvat. Muncitorul nu are e-mail completat.');await boot();state.tab='history';render()}
+async function addAdvance(){
+  const w=state.workers.find(x=>x.id==advWorker.value);
+  if(!w){alert("Alege muncitor");return}
+
+  const amount=Number(advAmount.value||0);
+  if(!amount){alert("Scrie suma avansului");return}
+
+  await sb.from("advances").insert({
+    worker_id:w.id,
+    amount:amount,
+    comment:advComment.value,
+    operator_name:sessionUser.email,
+    code:"AV-"+Date.now()
+  });
+
+  const rest=workerRest(w)-amount;
+  const msg=`💰 Brickstone Avans\nBună, ${w.name}.\nAi primit avans: ${amount} lei.\nRest salariu: ${rest} lei.\nData: ${new Date().toLocaleString("ro-RO")}`;
+
+  await sendTelegram(w.telegram_id,msg);
+
+  alert("Avans salvat și mesaj Telegram trimis");
+  await boot();
+}
 function exportCSV(){let list=isAdmin()?state.advances:state.advances.filter(a=>a.operator_name===sessionUser.email);let rows=[['Data','Muncitor','Telefon','Email','Operator','Suma','Comentariu']];list.forEach(a=>{const w=state.workers.find(x=>x.id===a.worker_id);rows.push([(a.created_at||'').slice(0,10),w?.name||'',w?.phone||'',w?.email||'',a.operator_name||'',a.amount||0,a.comment||''])});const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='brickstone_raport_avansuri.csv';link.click();URL.revokeObjectURL(url)}
 boot();
