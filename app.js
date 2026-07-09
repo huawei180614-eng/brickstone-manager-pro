@@ -1,16 +1,17 @@
 const SUPABASE_URL="https://gewgugneceqxwovkstqs.supabase.co";
 const SUPABASE_KEY="sb_publishable_Dy5AfagRaYpfkth3sy1MCA_ZDHv7jds";
 const TELEGRAM_BOT_TOKEN = "8728003141:AAEwhVI0488DjKV4booqeQSWhL5godM2ne4";
-
 async function sendTelegram(chatId, text) {
-  if (!chatId) return false;
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  const r = await fetch(url, {
+  await fetch("https://eos6cuniyvyuvyp4.m.pipedream.net", {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({chat_id: chatId, text})
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      chatId,
+      text
+    })
   });
-  return r.ok;
 }
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const app=document.getElementById('app');
