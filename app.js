@@ -9,7 +9,7 @@ async function sendTelegram(chatId, text) {
 
   try {
     const response = await fetch(
-      "https://eos6cuniyyuuvyp4.m.pipedream.net",
+      "https://eos6cuniyyuuvyp4.m.pipedream.net/",
       {
         method: "POST",
         headers: {
